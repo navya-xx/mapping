@@ -2,13 +2,19 @@ package com.example.ashutosh.mapping;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Address;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.v4.app.ActivityCompat;
+import android.util.Base64InputStream;
+import android.util.Base64OutputStream;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -29,6 +35,21 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Serializable;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -74,7 +95,9 @@ public class MapsActivity2 extends Activity implements
     private List<Address> addresses;
     private ArrayList<Long> time;
     Polyline line; //added
-    private TextView acc_view, dist;
+    File file;
+    OutputStream fos;
+    private TextView acc_view, dist, sz;
     double distance=0;
     protected ArrayList<LatLng> points= new ArrayList<LatLng>(){{
         if(MapsActivity.start_loc != null)
@@ -97,6 +120,9 @@ public class MapsActivity2 extends Activity implements
         double raz=6371000;
         distance += raz * c;
     }
+
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -121,7 +147,7 @@ public class MapsActivity2 extends Activity implements
         Log.d(TAG, "onCreate2 ...............................");
 
         MapFragment mapFragment =
-                (MapFragment) getFragmentManager().findFragmentById(R.id.map);
+                (MapFragment) getFragmentManager().findFragmentById(R.id.map2);
 
         Log.d(TAG, "onCreate3 ...............................");
         mapFragment.getMapAsync(this);
@@ -129,10 +155,186 @@ public class MapsActivity2 extends Activity implements
         Log.d(TAG, "onCreate4 ...............................");
 
         acc_view = (TextView) findViewById(R.id.accu);
+        sz = (TextView) findViewById(R.id.sz);
         dist = (TextView)findViewById(R.id.dist);
+
+
+        final Button button_save = (Button) findViewById(R.id.save);
+        button_save.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                write_points();
+            }
+        });
+
+    }
+
+    public void write_points(){
+        try {
+            File newFolder = new File(Environment.getExternalStorageDirectory(), "TestFolder");
+            if (!newFolder.exists()) {
+                newFolder.mkdir();
+            }
+            try {
+                file = new File(newFolder, "MyTest" + ".txt");
+                file.createNewFile();
+            } catch (Exception ex) {
+                System.out.println("ex: " + ex);
+            }
+        } catch (Exception e) {
+            System.out.println("e: " + e);
+        }
+
+        try {
+            fos = new FileOutputStream(file);
+            DataOutputStream myOutWriter =new DataOutputStream(fos);
+            myOutWriter.writeChars("Database of the run: \n");
+            for(int i=0; i<points.size();i++){
+                try {
+                    myOutWriter.writeChars(String.valueOf(i+1));
+                    myOutWriter.writeChars(") Latitude: ");
+                    myOutWriter.writeChars(String.valueOf(points.get(i).latitude));
+                    myOutWriter.writeChars(", Longitude: ");
+                    myOutWriter.writeChars(String.valueOf(points.get(i).longitude));
+                    myOutWriter.writeChars(System.getProperty("line.separator"));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            sz.setText(String.valueOf(points.size()));
+            myOutWriter.flush();
+            myOutWriter.close();
+            fos.flush();
+            fos.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 
+    public static class SerializeObject {
+        private final static String TAG = "SerializeObject";
+
+        /**
+         * Create a String from the Object using Base64 encoding
+         * @param object - any Object that is Serializable
+         * @return - Base64 encoded string.
+         */
+        public static String objectToString(Serializable object) {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            try {
+                new ObjectOutputStream(out).writeObject(object);
+                byte[] data = out.toByteArray();
+                out.close();
+
+                out = new ByteArrayOutputStream();
+                Base64OutputStream b64 = new Base64OutputStream(out,0);
+                b64.write(data);
+                b64.close();
+                out.close();
+
+                return new String(out.toByteArray());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        /**
+         * Creates a generic object that needs to be cast to its proper object
+         * from a Base64 ecoded string.
+         *
+         * @param encodedObject
+         * @return
+         */
+        public static Object stringToObject(String encodedObject) {
+            try {
+                return new ObjectInputStream(new Base64InputStream(
+                        new ByteArrayInputStream(encodedObject.getBytes()), 0)).readObject();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        /**
+         * Save serialized settings to a file
+         * @param context
+         * @param data
+         */
+        public static void WriteSettings(Context context, String data, String filename){
+            FileOutputStream fOut = null;
+            OutputStreamWriter osw = null;
+
+            try{
+                fOut = context.openFileOutput(filename, Context.MODE_PRIVATE);
+                osw = new OutputStreamWriter(fOut);
+                osw.write(data);
+                osw.flush();
+                //Toast.makeText(context, "Settings saved",Toast.LENGTH_SHORT).show();
+            } catch (Exception e) {
+                e.printStackTrace();
+                // Toast.makeText(context, "Settings not saved",Toast.LENGTH_SHORT).show();
+            }
+            finally {
+                try {
+                    if(osw!=null)
+                        osw.close();
+                    if (fOut != null)
+                        fOut.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        /**
+         * Read data from file and put it into a string
+         * @param context
+         * @param filename - fully qualified string name
+         * @return
+         */
+        public static String ReadSettings(Context context, String filename){
+            StringBuffer dataBuffer = new StringBuffer();
+            try{
+                // open the file for reading
+                InputStream instream = context.openFileInput(filename);
+                // if file the available for reading
+                if (instream != null) {
+                    // prepare the file for reading
+                    InputStreamReader inputreader = new InputStreamReader(instream);
+                    BufferedReader buffreader = new BufferedReader(inputreader);
+
+                    String newLine;
+                    // read every line of the file into the line-variable, on line at the time
+                    while (( newLine = buffreader.readLine()) != null) {
+                        // do something with the settings from the file
+                        dataBuffer.append(newLine);
+                    }
+                    // close the file again
+                    instream.close();
+                }
+
+            } catch (java.io.FileNotFoundException f) {
+                // do something if the myfilename.txt does not exits
+                Log.e(TAG, "FileNot Found in ReadSettings filename = " + filename);
+                try {
+                    context.openFileOutput(filename, Context.MODE_PRIVATE);
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+            } catch (IOException e) {
+                Log.e(TAG, "IO Error in ReadSettings filename = " + filename);
+            }
+
+            return dataBuffer.toString();
+        }
+
+    }
+
+    //
     @Override
     public void onStart() {
         super.onStart();
@@ -226,10 +428,10 @@ public class MapsActivity2 extends Activity implements
         lat.setText(String.valueOf(latitude));
         TextView longi = (TextView) findViewById(R.id.longi);
         longi.setText(String.valueOf(longitude));
-        acc_view.setText(String.valueOf(accuracy));
-        int sz=points.size();
-        dist_calc(points.get(sz-1).latitude,points.get(sz-2).latitude, points.get(sz-1).longitude, points.get(sz-2).longitude );
-        dist.setText(String.valueOf(distance));
+        acc_view.setText(String.format("%.2f", accuracy));
+        int sz = points.size();
+        dist_calc(points.get(sz-1).latitude, points.get(sz - 2).latitude, points.get(sz-1).longitude, points.get(sz-2).longitude );
+        dist.setText(String.format("%.2f", distance));
         Log.d(TAG, "after points");
         if(points.size()>2)
             redrawLine();
@@ -503,9 +705,9 @@ public class MapsActivity2 extends Activity implements
         //map.addMarker(); //add Marker in current position
         googleMap.addPolyline(options); //add Polyline*/
 
-
         line = googleMap.addPolyline(new PolylineOptions().width(3).color(Color.RED));
         Log.d(TAG, "onMapReady6 .......................");
+
 
     }
 }

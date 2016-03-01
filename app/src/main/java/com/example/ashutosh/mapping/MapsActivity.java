@@ -14,7 +14,6 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.view.View;
 import android.widget.Button;
-import android.widget.TextView;
 
 import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
@@ -42,7 +41,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public static List<LatLng> gpsLoc = new ArrayList<>();
     public static LatLng start_loc;
     private LocationRequest mLocationRequest;
-    TextView posX,posY;
+    //TextView posX, posY;
     private Location mCurrentLocation;
    /* private final SensorManager mSensorManager;
     private final Sensor mAccelerometer;
@@ -59,7 +58,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         setContentView(R.layout.activity_maps);
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map);
+                .findFragmentById(R.id.map1);
         mapFragment.getMapAsync(this);
 
         final Button button = (Button) findViewById(R.id.start1);
@@ -73,8 +72,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 startActivity(new Intent(MapsActivity.this, MapsActivity2.class));
             }
         });
-        posX = (TextView) findViewById(R.id.accX);
-        posY = (TextView) findViewById(R.id.accY);
+        //posX = (TextView) findViewById(R.id.positionX);
+        //posY = (TextView) findViewById(R.id.positionY);
 
         // ATTENTION: This "addApi(AppIndex.API)"was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
@@ -103,7 +102,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.setMyLocationEnabled(true);
         LatLng defaultLoc = new LatLng(59.3293230, 18.0685810);
         //mMap.addMarker(new MarkerOptions().position(defaultLoc).title("Stockholm"));
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(defaultLoc, 12.0f));
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(defaultLoc, 10.0f));
         //mMap.moveCamera(CameraUpdateFactory.newLatLng(defaultLoc));
 
 
@@ -126,27 +125,29 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             // for ActivityCompat#requestPermissions for more details.
             return;
         }
-             Location myLocation = locationManager.getLastKnownLocation(provider);
+        Location myLocation = locationManager.getLastKnownLocation(provider);
 
-            // set map type
-            mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+        // set map type
+        mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
 
-            // Get latitude of the current location
-            double latitude = myLocation.getLatitude();
+        // Get latitude of the current location
+        double latitude = myLocation.getLatitude();
 
-            // Get longitude of the current location
-            double longitude = myLocation.getLongitude();
+        // Get longitude of the current location
+        double longitude = myLocation.getLongitude();
 
-            // Create a LatLng object for the current location
-            LatLng latLng = new LatLng(latitude, longitude);
-            start_loc = latLng;
+        // Create a LatLng object for the current location
+        LatLng latLng = new LatLng(latitude, longitude);
+        start_loc = latLng;
 
-            // Show the current location in Google Map
-            mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
 
-            // Zoom in the Google Map
-            mMap.animateCamera(CameraUpdateFactory.zoomTo(14));
-            mMap.addMarker(new MarkerOptions().position(new LatLng(latitude, longitude)).title("You are here!").snippet("Consider yourself located"));
+
+        // Show the current location in Google Map
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+
+        // Zoom in the Google Map
+        mMap.animateCamera(CameraUpdateFactory.zoomTo(14));
+        mMap.addMarker(new MarkerOptions().position(new LatLng(latitude, longitude)).title("You are here!").snippet("Consider yourself located"));
     }
 
 
@@ -160,7 +161,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mLocationRequest.setSmallestDisplacement(SMALLEST_DISPLACE);
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 
-        }
+    }
 
     public void onClick(View v){
 
@@ -306,7 +307,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         String strY=new String().valueOf(event.values[1]);
         String strZ=new String().valueOf(event.values[2]);
         TextView accX = (TextView)findViewById(R.id.accX);
-        accX.setText(strX);
+        accX.stxt(strX);
         TextView accY = (TextView)findViewById(R.id.accY);
         accY.setText(strY);
         TextView accZ = (TextView)findViewById(R.id.accZ);

@@ -6,7 +6,9 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MapsActivity"
-    tools:ignore="MergeRootFrame" >
+    tools:ignore="MergeRootFrame"
+    android:keepScreenOn="true">
+    >
     <LinearLayout
         android:orientation="vertical"
         android:layout_width="fill_parent"
@@ -15,20 +17,30 @@
             android:layout_width="match_parent"
             android:layout_height="31dp"
             android:id="@+id/textViewTitle"
-            android:textStyle="italic"
-            android:text="Location" />
+            android:textStyle="bold"
+            android:text="Run Statistics" />
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
             <TextView
-                android:layout_width="200dp"
+                android:layout_width="90dp"
+                android:layout_height="wrap_content"
+                android:text="Latitude:"
+                android:textStyle="bold"/>
+            <TextView
+                android:layout_width="90dp"
                 android:layout_height="wrap_content"
                 android:text="Latitude"
                 android:id="@+id/lat"
                 android:textStyle="bold"/>
             <TextView
-                android:layout_width="200dp"
+                android:layout_width="90dp"
+                android:layout_height="wrap_content"
+                android:text="Longitude:"
+                android:textStyle="bold"/>
+            <TextView
+                android:layout_width="90dp"
                 android:layout_height="wrap_content"
                 android:text="Longitude"
                 android:id="@+id/longi"
@@ -39,32 +51,76 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal">
             <TextView
-                android:layout_width="200dp"
+                android:layout_width="90dp"
+                android:layout_height="wrap_content"
+                android:text="Speed(m/s):"
+                android:textStyle="bold"/>
+            <TextView
+                android:layout_width="90dp"
                 android:layout_height="wrap_content"
                 android:text="Speed"
                 android:id="@+id/speed"
                 android:textStyle="bold"/>
             <TextView
-                android:layout_width="200dp"
+                android:layout_width="90dp"
                 android:layout_height="wrap_content"
-                android:text="Time"
-                android:id="@+id/accu"
+                android:text="Distance(m): "
                 android:textStyle="bold"/>
+            <TextView
+                android:layout_width="90dp"
+                android:layout_height="wrap_content"
+                android:text="Distance"
+                android:textStyle="bold"
+                android:id="@+id/dist"/>
         </LinearLayout>
-        <TextView
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Distance"
-            android:textStyle="bold"
-            android:id="@+id/dist"/>
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="90dp"
+                android:layout_height="wrap_content"
+                android:text="Accuracy(m)"
+                android:textStyle="bold"/>
+            <TextView
+                android:layout_width="90dp"
+                android:layout_height="wrap_content"
+                android:text="Accuracy(m)"
+                android:id="@+id/accu"
+                android:textStyle="bold"/>
+            <TextView
+                android:layout_width="90dp"
+                android:layout_height="wrap_content"
+                android:text="Num_Points:"
+                android:textStyle="bold"/>
+            <TextView
+                android:layout_width="90dp"
+                android:layout_height="wrap_content"
+                android:text="Num_Points"
+                android:id="@+id/sz"
+                android:textStyle="bold"/>
+        </LinearLayout>
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <Button
+                android:layout_width="200dp"
+                android:layout_height="wrap_content"
+                android:text="SAVE"
+                android:layout_gravity="center"
+                android:id="@+id/save"
+                android:layout_weight="0.28"
+                android:layout_alignParentTop="true"
+                android:layout_centerHorizontal="true" />
+        </RelativeLayout>
 
         <fragment xmlns:android="http://schemas.android.com/apk/res/android"
             xmlns:tools="http://schemas.android.com/tools"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:name="com.google.android.gms.maps.MapFragment"
-            android:id="@+id/map"
-            tools:context="com.example.ashutosh.mapping.MapsActivity2"
-            tools:layout="@layout/activity_maps" />
+            android:id="@+id/map2"
+            tools:context="com.example.ashutosh.mapping.MapsActivity2"/>
+        <!--tools:layout="@layout/activity_maps" -->
     </LinearLayout>
 </FrameLayout>

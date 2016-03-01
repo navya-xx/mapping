@@ -17,7 +17,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ImageView img= (ImageView) findViewById(R.id.img);
-        img.setImageResource(R.drawable.mapper2);
+        img.setImageResource(R.drawable.mapper);
         final Button b = (Button) findViewById(R.id.next);
         b.setOnClickListener(new View.OnClickListener() {
             @Override

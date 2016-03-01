@@ -31,24 +31,24 @@
             android:layout_weight="0.43" />
     </LinearLayout>
 
-    <LinearLayout
+    <!--<LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
         <TextView
-            android:id="@+id/accX"
+            android:id="@+id/positionX"
             android:layout_width="119dp"
             android:layout_gravity="left"
             android:textAppearance="?android:attr/textAppearanceLarge"
             android:layout_height="wrap_content"
-            android:text="Acc_X"/>
+            android:text="Latitude"/>
         <TextView
-            android:id="@+id/accY"
+            android:id="@+id/positionY"
             android:layout_width="119dp"
             android:layout_gravity="center"
             android:textAppearance="?android:attr/textAppearanceLarge"
             android:layout_height="wrap_content"
-            android:text="Acc_Y"/>
+            android:text="Longitude"/>
         <TextView
             android:id="@+id/accZ"
             android:layout_width="119dp"
@@ -84,12 +84,12 @@
             android:text="Speed"
             android:id="@+id/speed" />
     </LinearLayout>
+    -->
     <fragment xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:map="http://schemas.android.com/apk/res-auto"
         xmlns:tools="http://schemas.android.com/tools"
-        android:id="@+id/map"
+        android:id="@+id/map1"
         android:name="com.google.android.gms.maps.SupportMapFragment"
-        android:layout_width="387dp"
-        android:layout_height="416dp"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         tools:context="com.example.ashutosh.mapping.MapsActivity" />
 </LinearLayout>
