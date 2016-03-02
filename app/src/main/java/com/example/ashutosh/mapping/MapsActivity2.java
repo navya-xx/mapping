@@ -683,7 +683,7 @@ public class MapsActivity2 extends Activity implements
 
                 Toast.makeText(getApplicationContext(), "Location button has been clicked", Toast.LENGTH_LONG).show();
                 if (points.size() > 0)
-                    googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(points.get(points.size() - 1), 16));
+                    googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(points.get(points.size() - 1), 12));
                 return true;
             }
         });
@@ -696,9 +696,8 @@ public class MapsActivity2 extends Activity implements
         //LatLngBounds track = new LatLngBounds(gpsLoc.get(0), gpsLoc.get(numLoc - 1));
         //mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(track,0));
 
-        int numLoc = MapsActivity.gpsLoc.size();
         googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(MapsActivity.gpsLoc.get(0), 16.0f));
-        for (int i = 0; i < numLoc; i++) {
+        for (int i = 0; i < MapsActivity.numLoc; i++) {
             LatLng point = MapsActivity.gpsLoc.get(i);
             options.add(point);
         }

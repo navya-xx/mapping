@@ -36,7 +36,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
     private GoogleMap mMap;
-    private int numLoc = 0;
+    public static int numLoc = 0;
     private GoogleApiClient mGoogleApiClient;
     public static List<LatLng> gpsLoc = new ArrayList<>();
     public static LatLng start_loc;
@@ -102,7 +102,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.setMyLocationEnabled(true);
         LatLng defaultLoc = new LatLng(59.3293230, 18.0685810);
         //mMap.addMarker(new MarkerOptions().position(defaultLoc).title("Stockholm"));
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(defaultLoc, 10.0f));
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(defaultLoc, 4.0f));
         //mMap.moveCamera(CameraUpdateFactory.newLatLng(defaultLoc));
 
 
@@ -143,10 +143,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
         // Show the current location in Google Map
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+        //mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
 
         // Zoom in the Google Map
-        mMap.animateCamera(CameraUpdateFactory.zoomTo(14));
+        //mMap.animateCamera(CameraUpdateFactory.zoomTo(16));
         mMap.addMarker(new MarkerOptions().position(new LatLng(latitude, longitude)).title("You are here!").snippet("Consider yourself located"));
     }
 
