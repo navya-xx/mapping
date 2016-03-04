@@ -2,13 +2,19 @@ package com.example.ashutosh.mapping;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Address;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.v4.app.ActivityCompat;
+import android.util.Base64InputStream;
+import android.util.Base64OutputStream;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -29,6 +35,21 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Serializable;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -57,10 +78,10 @@ public class MapsActivity2 extends Activity implements
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
     }
 
-    private static final String TAG = "MainActivity";
-    private static final long INTERVAL = 500; //1 sec
-    private final long FASTEST_INTERVAL = 500; // 1sec
-    private static final float SMALLEST_DISPLACEMENT = 0.01F; //unit is meter
+    private static final String TAG = "MapActivity2";
+    private static final long INTERVAL = 0; //1 sec
+    private final long FASTEST_INTERVAL = 0; // 1sec
+    private static final float SMALLEST_DISPLACEMENT = 0F; //unit is meter
     private LocationRequest mLocationRequest;
     private GoogleApiClient mGoogleApiClient;
     private Location mCurrentLocation;
@@ -72,10 +93,17 @@ public class MapsActivity2 extends Activity implements
     private String requiredArea = "";
     private GoogleMap googleMap;
     private List<Address> addresses;
-    private ArrayList<Long> time;
+    private ArrayList<Long> timeElap = new ArrayList<Long>();
     Polyline line; //added
-    private TextView acc_view, dist;
+    File file;
+    OutputStream fos;
+    private TextView acc_view, dist, sz, timeDisp;
     double distance=0;
+    int flag_stop=0;
+
+    public long totTime=0;
+
+    protected ArrayList<Date> dateStamp= new ArrayList<Date>();
     protected ArrayList<LatLng> points= new ArrayList<LatLng>(){{
         if(MapsActivity.start_loc != null)
             add(0,MapsActivity.start_loc);
@@ -97,6 +125,9 @@ public class MapsActivity2 extends Activity implements
         double raz=6371000;
         distance += raz * c;
     }
+
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -121,7 +152,7 @@ public class MapsActivity2 extends Activity implements
         Log.d(TAG, "onCreate2 ...............................");
 
         MapFragment mapFragment =
-                (MapFragment) getFragmentManager().findFragmentById(R.id.map);
+                (MapFragment) getFragmentManager().findFragmentById(R.id.map2);
 
         Log.d(TAG, "onCreate3 ...............................");
         mapFragment.getMapAsync(this);
@@ -129,10 +160,198 @@ public class MapsActivity2 extends Activity implements
         Log.d(TAG, "onCreate4 ...............................");
 
         acc_view = (TextView) findViewById(R.id.accu);
+        sz = (TextView) findViewById(R.id.sz);
         dist = (TextView)findViewById(R.id.dist);
+        timeDisp = (TextView)findViewById(R.id.timeDur);
+
+
+        final Button button_save = (Button) findViewById(R.id.save);
+        button_save.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                flag_stop=1;
+                write_points();
+            }
+        });
+
+    }
+
+    public void write_points(){
+        try {
+            File newFolder = new File(Environment.getExternalStorageDirectory(), "TestFolder");
+            if (!newFolder.exists()) {
+                newFolder.mkdir();
+            }
+            try {
+                file = new File(newFolder, "MyTest" + ".txt");
+                file.createNewFile();
+            } catch (Exception ex) {
+                System.out.println("ex: " + ex);
+            }
+        } catch (Exception e) {
+            System.out.println("e: " + e);
+        }
+
+        try {
+            fos = new FileOutputStream(file);
+            DataOutputStream myOutWriter =new DataOutputStream(fos);
+            myOutWriter.writeChars("Database of the run: \n");
+            for(int i=0; i<points.size();i++){
+                try {
+                    myOutWriter.writeChars(String.valueOf(i+1));
+                    myOutWriter.writeChars(") Latitude: ");
+                    myOutWriter.writeChars(String.valueOf(points.get(i).latitude));
+                    myOutWriter.writeChars(", Longitude: ");
+                    myOutWriter.writeChars(String.valueOf(points.get(i).longitude));
+                    myOutWriter.writeChars(", Time: ");
+                    myOutWriter.writeChars(String.valueOf(timeElap.get(i)));
+                    myOutWriter.writeChars(System.getProperty("line.separator"));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            myOutWriter.writeChars(System.getProperty("line.separator"));
+            myOutWriter.writeChars(System.getProperty("line.separator"));
+            myOutWriter.writeChars("Total time(s):  ");
+            myOutWriter.writeChars(String.valueOf(totTime));
+            myOutWriter.writeChars(", Total Distance(m):  ");
+            myOutWriter.writeChars(String.valueOf(distance));
+            sz.setText(String.valueOf(points.size()));
+            myOutWriter.flush();
+            myOutWriter.close();
+            fos.flush();
+            fos.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Toast.makeText(getApplicationContext(), "Run Data Saved!", Toast.LENGTH_LONG).show();
     }
 
 
+    public static class SerializeObject {
+        private final static String TAG = "SerializeObject";
+
+        /**
+         * Create a String from the Object using Base64 encoding
+         * @param object - any Object that is Serializable
+         * @return - Base64 encoded string.
+         */
+        public static String objectToString(Serializable object) {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            try {
+                new ObjectOutputStream(out).writeObject(object);
+                byte[] data = out.toByteArray();
+                out.close();
+
+                out = new ByteArrayOutputStream();
+                Base64OutputStream b64 = new Base64OutputStream(out,0);
+                b64.write(data);
+                b64.close();
+                out.close();
+
+                return new String(out.toByteArray());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        /**
+         * Creates a generic object that needs to be cast to its proper object
+         * from a Base64 ecoded string.
+         *
+         * @param encodedObject
+         * @return
+         */
+        public static Object stringToObject(String encodedObject) {
+            try {
+                return new ObjectInputStream(new Base64InputStream(
+                        new ByteArrayInputStream(encodedObject.getBytes()), 0)).readObject();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        /**
+         * Save serialized settings to a file
+         * @param context
+         * @param data
+         */
+        public static void WriteSettings(Context context, String data, String filename){
+            FileOutputStream fOut = null;
+            OutputStreamWriter osw = null;
+
+            try{
+                fOut = context.openFileOutput(filename, Context.MODE_PRIVATE);
+                osw = new OutputStreamWriter(fOut);
+                osw.write(data);
+                osw.flush();
+                //Toast.makeText(context, "Settings saved",Toast.LENGTH_SHORT).show();
+            } catch (Exception e) {
+                e.printStackTrace();
+                // Toast.makeText(context, "Settings not saved",Toast.LENGTH_SHORT).show();
+            }
+            finally {
+                try {
+                    if(osw!=null)
+                        osw.close();
+                    if (fOut != null)
+                        fOut.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        /**
+         * Read data from file and put it into a string
+         * @param context
+         * @param filename - fully qualified string name
+         * @return
+         */
+        public static String ReadSettings(Context context, String filename){
+            StringBuffer dataBuffer = new StringBuffer();
+            try{
+                // open the file for reading
+                InputStream instream = context.openFileInput(filename);
+                // if file the available for reading
+                if (instream != null) {
+                    // prepare the file for reading
+                    InputStreamReader inputreader = new InputStreamReader(instream);
+                    BufferedReader buffreader = new BufferedReader(inputreader);
+
+                    String newLine;
+                    // read every line of the file into the line-variable, on line at the time
+                    while (( newLine = buffreader.readLine()) != null) {
+                        // do something with the settings from the file
+                        dataBuffer.append(newLine);
+                    }
+                    // close the file again
+                    instream.close();
+                }
+
+            } catch (java.io.FileNotFoundException f) {
+                // do something if the myfilename.txt does not exits
+                Log.e(TAG, "FileNot Found in ReadSettings filename = " + filename);
+                try {
+                    context.openFileOutput(filename, Context.MODE_PRIVATE);
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+            } catch (IOException e) {
+                Log.e(TAG, "IO Error in ReadSettings filename = " + filename);
+            }
+
+            return dataBuffer.toString();
+        }
+
+    }
+
+    //
     @Override
     public void onStart() {
         super.onStart();
@@ -192,11 +411,24 @@ public class MapsActivity2 extends Activity implements
         Log.d(TAG, "Connection failed: " + connectionResult.toString());
     }
 
+    public void timeElapsed(){
+        long d0 = dateStamp.get(0).getTime();
+        long d1 = dateStamp.get(points.size()-1).getTime();
+        long d2 = dateStamp.get(points.size()-2).getTime();
+
+        //in seconds
+        long diff = (d1 - d2)/1000;
+        totTime = (d1-d0)/1000;
+        timeElap.add(diff);
+        timeDisp.setText(String.valueOf(totTime));
+    }
+
     @Override
     public void onLocationChanged(Location location) {
         Log.d(TAG, "Firing onLocationChanged..............................................");
         mCurrentLocation = location;
         mLastUpdateTime = DateFormat.getTimeInstance().format(new Date());
+
         //addMarker();
         float accuracy = location.getAccuracy();
 
@@ -226,10 +458,12 @@ public class MapsActivity2 extends Activity implements
         lat.setText(String.valueOf(latitude));
         TextView longi = (TextView) findViewById(R.id.longi);
         longi.setText(String.valueOf(longitude));
-        acc_view.setText(String.valueOf(accuracy));
-        int sz=points.size();
-        dist_calc(points.get(sz-1).latitude,points.get(sz-2).latitude, points.get(sz-1).longitude, points.get(sz-2).longitude );
-        dist.setText(String.valueOf(distance));
+        acc_view.setText(String.format("%.2f", accuracy));
+        int sz = points.size();
+        dist_calc(points.get(sz-1).latitude, points.get(sz - 2).latitude, points.get(sz-1).longitude, points.get(sz-2).longitude );
+        dist.setText(String.format("%.2f", distance));
+        dateStamp.add(new Date());
+        timeElapsed();
         Log.d(TAG, "after points");
         if(points.size()>2)
             redrawLine();
@@ -456,7 +690,7 @@ public class MapsActivity2 extends Activity implements
 
     @Override
     public void onMapReady(final GoogleMap googleMap) {
-        Log.d(TAG, "onMapReady .......................");
+        Log.d(TAG, "onMapReadyhula .......................");
         createLocationRequest();
         Log.d(TAG, "onMapReady2 .......................");
 
@@ -488,24 +722,27 @@ public class MapsActivity2 extends Activity implements
         Log.d(TAG, "onMapReady5 .......................");
 
 
+        googleMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
         googleMap.getUiSettings().setZoomControlsEnabled(true);
         googleMap.getUiSettings().setAllGesturesEnabled(true);
         PolylineOptions options = new PolylineOptions().width(5).color(Color.BLUE).geodesic(true);
         //LatLngBounds track = new LatLngBounds(gpsLoc.get(0), gpsLoc.get(numLoc - 1));
         //mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(track,0));
 
-        int numLoc = MapsActivity.gpsLoc.size();
-        googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(MapsActivity.gpsLoc.get(0), 16.0f));
-        for (int i = 0; i < numLoc; i++) {
+        googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(MapsActivity.start_loc, 16.0f));
+        for (int i = 0; i < MapsActivity.numLoc; i++) {
             LatLng point = MapsActivity.gpsLoc.get(i);
             options.add(point);
         }
         //map.addMarker(); //add Marker in current position
         googleMap.addPolyline(options); //add Polyline*/
 
-
         line = googleMap.addPolyline(new PolylineOptions().width(3).color(Color.RED));
         Log.d(TAG, "onMapReady6 .......................");
+        dateStamp.add(0, new Date());
+        long t=0;
+        timeElap.add(t);
+        Log.d(TAG, "onMapReady6hula .......................");
 
     }
 }
