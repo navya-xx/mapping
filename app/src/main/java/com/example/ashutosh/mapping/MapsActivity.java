@@ -12,6 +12,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
@@ -35,10 +36,12 @@ import java.util.List;
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, View.OnClickListener,
         GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
+    private static final String TAG = "Mapwa";
     private GoogleMap mMap;
     public static int numLoc = 0;
     private GoogleApiClient mGoogleApiClient;
     public static List<LatLng> gpsLoc = new ArrayList<>();
+
     public static LatLng start_loc;
     private LocationRequest mLocationRequest;
     //TextView posX, posY;
@@ -87,7 +90,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-
+        mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
         createLocationRequest();
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
@@ -139,8 +142,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         // Create a LatLng object for the current location
         LatLng latLng = new LatLng(latitude, longitude);
         start_loc = latLng;
-
-
 
         // Show the current location in Google Map
         //mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
@@ -197,14 +198,76 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     } catch (MalformedURLException e) {
                     } catch (IOException e) {
                     }*/
-                numLoc = 4;
-                gpsLoc.add(0, new LatLng(59.370376, 18.064167));
-                gpsLoc.add(1, new LatLng(59.370267, 18.064895));
-                gpsLoc.add(2, new LatLng(59.370663, 18.065433));
-                gpsLoc.add(3, new LatLng(59.370626, 18.066620));
-                gpsLoc.add(3, new LatLng(59.370453, 18.067459));
-                gpsLoc.add(3, new LatLng(59.370421, 18.067847));
-                gpsLoc.add(3, new LatLng(59.370199, 18.067784));
+
+                Log.d(TAG, "Loading Track");
+
+
+                if(com.example.ashutosh.mapping.List.trackId == 0){
+                    nearest_track(start_loc);
+                    Log.d(TAG, "Loading Track nearest");
+                }
+                else {
+                    TrackList tTrack;
+                    tTrack=com.example.ashutosh.mapping.List.tracks.get(com.example.ashutosh.mapping.List.trackId -1);
+                    numLoc=tTrack.listLen;
+                    gpsLoc=tTrack.gpsList;
+                    Log.d(TAG, "Loading Track num");
+                }
+
+                /*switch (com.example.ashutosh.mapping.List.trackId) {
+                    case 0:
+                        nearest_track(start_loc);
+                        break;
+                    case 1:
+                        numLoc = 6;
+                        gpsLoc.add(0, new LatLng(59.370376, 18.064167));
+                        gpsLoc.add(1, new LatLng(59.370267, 18.064895));
+                        gpsLoc.add(2, new LatLng(59.370663, 18.065433));
+                        gpsLoc.add(3, new LatLng(59.370626, 18.066620));
+                        gpsLoc.add(4, new LatLng(59.370453, 18.067459));
+                        gpsLoc.add(5, new LatLng(59.370421, 18.067847));
+                        break;
+                    case 2:
+                        numLoc = 5;
+                        gpsLoc.add(0, new LatLng(59.370376, 18.064167));
+                        gpsLoc.add(1, new LatLng(59.370267, 18.064895));
+                        gpsLoc.add(2, new LatLng(59.370663, 18.065433));
+                        gpsLoc.add(3, new LatLng(59.370626, 18.066620));
+                        gpsLoc.add(4, new LatLng(59.370453, 18.067459));
+                        break;
+                    case 3:
+                        numLoc = 4;
+                        gpsLoc.add(0, new LatLng(59.370376, 18.064167));
+                        gpsLoc.add(1, new LatLng(59.370267, 18.064895));
+                        gpsLoc.add(2, new LatLng(59.370663, 18.065433));
+                        gpsLoc.add(3, new LatLng(59.370626, 18.066620));
+                        break;
+                    case 4:
+                        numLoc = 4;
+                        gpsLoc.add(0, new LatLng(59.370376, 18.064167));
+                        gpsLoc.add(1, new LatLng(59.370267, 18.064895));
+                        gpsLoc.add(2, new LatLng(59.370663, 18.065433));
+                        gpsLoc.add(3, new LatLng(59.370626, 18.066620));
+                        break;
+                    case 5:
+                        numLoc = 7;
+                        gpsLoc.add(0, new LatLng(59.370376, 18.064167));
+                        gpsLoc.add(1, new LatLng(59.370267, 18.064895));
+                        gpsLoc.add(2, new LatLng(59.370663, 18.065433));
+                        gpsLoc.add(3, new LatLng(59.370626, 18.066620));
+                        gpsLoc.add(4, new LatLng(59.370453, 18.067459));
+                        gpsLoc.add(5, new LatLng(59.370421, 18.067847));
+                        gpsLoc.add(6, new LatLng(59.370199, 18.067784));
+                        break;
+                    default:
+                        numLoc = 4;
+                        gpsLoc.add(0, new LatLng(59.370376, 18.064167));
+                        gpsLoc.add(1, new LatLng(59.370267, 18.064895));
+                        gpsLoc.add(2, new LatLng(59.370663, 18.065433));
+                        gpsLoc.add(3, new LatLng(59.370626, 18.066620));
+                        gpsLoc.add(3, new LatLng(59.370453, 18.067459));
+                        gpsLoc.add(3, new LatLng(59.370421, 18.067847));
+                }*/
                 break;
             }
             case R.id.start2:
@@ -212,12 +275,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 PolylineOptions options = new PolylineOptions().width(5).color(Color.BLUE).geodesic(true);
                 //LatLngBounds track = new LatLngBounds(gpsLoc.get(0), gpsLoc.get(numLoc - 1));
                 //mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(track,0));
-                mMap.animateCamera( CameraUpdateFactory.newLatLngZoom( gpsLoc.get(0),16.0f ) );
-
+                Log.d(TAG, "Poly op");
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(gpsLoc.get(0), 16.0f));
+                Log.d(TAG, "Cam anim");
                 for (int i = 0; i < numLoc; i++) {
                     LatLng point = gpsLoc.get(i);
                     options.add(point);
                 }
+                Log.d(TAG, "track drawn");
                 //map.addMarker(); //add Marker in current position
                 mMap.addPolyline(options); //add Polyline*/
 
@@ -230,6 +295,29 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onConnected(Bundle bundle) {
 
+    }
+
+    public void nearest_track(LatLng start_loc){
+        float distMin=10000000;
+        int idTrack=0;
+        TrackList tempTrack;
+        for(int i=0; i< com.example.ashutosh.mapping.List.numTracks; i++){
+            tempTrack=com.example.ashutosh.mapping.List.tracks.get(i);
+            if(i==0){
+                distMin=distanceGps(start_loc,tempTrack.startPoint);
+                idTrack=i+1;
+            }
+            else{
+                float t=distanceGps(start_loc,tempTrack.startPoint);
+                if(t<distMin){
+                    distMin=t;
+                    idTrack=i+1;
+                }
+            }
+        }
+        tempTrack=com.example.ashutosh.mapping.List.tracks.get(idTrack-1);
+        numLoc = tempTrack.listLen;
+        gpsLoc = tempTrack.gpsList;
     }
 
     @Override
@@ -283,6 +371,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
 
+
 /*
     protected void onResume() {
         super.onResume();
@@ -313,5 +402,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         TextView accZ = (TextView)findViewById(R.id.accZ);
         accZ.setText(strZ);
     }*/
+
+    public float distanceGps(LatLng a, LatLng b){
+        Location loc1 = new Location("");
+        loc1.setLatitude(a.latitude);
+        loc1.setLongitude(a.longitude);
+
+        Location loc2 = new Location("");
+        loc2.setLatitude(b.latitude);
+        loc2.setLongitude(b.longitude);
+
+        return loc1.distanceTo(loc2);
+    }
 }
 

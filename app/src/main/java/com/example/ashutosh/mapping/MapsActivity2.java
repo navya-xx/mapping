@@ -78,10 +78,10 @@ public class MapsActivity2 extends Activity implements
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
     }
 
-    private static final String TAG = "MainActivity";
-    private static final long INTERVAL = 500; //1 sec
-    private final long FASTEST_INTERVAL = 500; // 1sec
-    private static final float SMALLEST_DISPLACEMENT = 0.01F; //unit is meter
+    private static final String TAG = "MapActivity2";
+    private static final long INTERVAL = 0; //1 sec
+    private final long FASTEST_INTERVAL = 0; // 1sec
+    private static final float SMALLEST_DISPLACEMENT = 0F; //unit is meter
     private LocationRequest mLocationRequest;
     private GoogleApiClient mGoogleApiClient;
     private Location mCurrentLocation;
@@ -93,12 +93,17 @@ public class MapsActivity2 extends Activity implements
     private String requiredArea = "";
     private GoogleMap googleMap;
     private List<Address> addresses;
-    private ArrayList<Long> time;
+    private ArrayList<Long> timeElap = new ArrayList<Long>();
     Polyline line; //added
     File file;
     OutputStream fos;
-    private TextView acc_view, dist, sz;
+    private TextView acc_view, dist, sz, timeDisp;
     double distance=0;
+    int flag_stop=0;
+
+    public long totTime=0;
+
+    protected ArrayList<Date> dateStamp= new ArrayList<Date>();
     protected ArrayList<LatLng> points= new ArrayList<LatLng>(){{
         if(MapsActivity.start_loc != null)
             add(0,MapsActivity.start_loc);
@@ -157,12 +162,14 @@ public class MapsActivity2 extends Activity implements
         acc_view = (TextView) findViewById(R.id.accu);
         sz = (TextView) findViewById(R.id.sz);
         dist = (TextView)findViewById(R.id.dist);
+        timeDisp = (TextView)findViewById(R.id.timeDur);
 
 
         final Button button_save = (Button) findViewById(R.id.save);
         button_save.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                flag_stop=1;
                 write_points();
             }
         });
@@ -196,11 +203,20 @@ public class MapsActivity2 extends Activity implements
                     myOutWriter.writeChars(String.valueOf(points.get(i).latitude));
                     myOutWriter.writeChars(", Longitude: ");
                     myOutWriter.writeChars(String.valueOf(points.get(i).longitude));
+                    myOutWriter.writeChars(", Time: ");
+                    myOutWriter.writeChars(String.valueOf(timeElap.get(i)));
                     myOutWriter.writeChars(System.getProperty("line.separator"));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
+
+            myOutWriter.writeChars(System.getProperty("line.separator"));
+            myOutWriter.writeChars(System.getProperty("line.separator"));
+            myOutWriter.writeChars("Total time(s):  ");
+            myOutWriter.writeChars(String.valueOf(totTime));
+            myOutWriter.writeChars(", Total Distance(m):  ");
+            myOutWriter.writeChars(String.valueOf(distance));
             sz.setText(String.valueOf(points.size()));
             myOutWriter.flush();
             myOutWriter.close();
@@ -211,6 +227,7 @@ public class MapsActivity2 extends Activity implements
         } catch (IOException e) {
             e.printStackTrace();
         }
+        Toast.makeText(getApplicationContext(), "Run Data Saved!", Toast.LENGTH_LONG).show();
     }
 
 
@@ -394,11 +411,24 @@ public class MapsActivity2 extends Activity implements
         Log.d(TAG, "Connection failed: " + connectionResult.toString());
     }
 
+    public void timeElapsed(){
+        long d0 = dateStamp.get(0).getTime();
+        long d1 = dateStamp.get(points.size()-1).getTime();
+        long d2 = dateStamp.get(points.size()-2).getTime();
+
+        //in seconds
+        long diff = (d1 - d2)/1000;
+        totTime = (d1-d0)/1000;
+        timeElap.add(diff);
+        timeDisp.setText(String.valueOf(totTime));
+    }
+
     @Override
     public void onLocationChanged(Location location) {
         Log.d(TAG, "Firing onLocationChanged..............................................");
         mCurrentLocation = location;
         mLastUpdateTime = DateFormat.getTimeInstance().format(new Date());
+
         //addMarker();
         float accuracy = location.getAccuracy();
 
@@ -432,6 +462,8 @@ public class MapsActivity2 extends Activity implements
         int sz = points.size();
         dist_calc(points.get(sz-1).latitude, points.get(sz - 2).latitude, points.get(sz-1).longitude, points.get(sz-2).longitude );
         dist.setText(String.format("%.2f", distance));
+        dateStamp.add(new Date());
+        timeElapsed();
         Log.d(TAG, "after points");
         if(points.size()>2)
             redrawLine();
@@ -658,7 +690,7 @@ public class MapsActivity2 extends Activity implements
 
     @Override
     public void onMapReady(final GoogleMap googleMap) {
-        Log.d(TAG, "onMapReady .......................");
+        Log.d(TAG, "onMapReadyhula .......................");
         createLocationRequest();
         Log.d(TAG, "onMapReady2 .......................");
 
@@ -683,20 +715,21 @@ public class MapsActivity2 extends Activity implements
 
                 Toast.makeText(getApplicationContext(), "Location button has been clicked", Toast.LENGTH_LONG).show();
                 if (points.size() > 0)
-                    googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(points.get(points.size() - 1), 12));
+                    googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(points.get(points.size() - 1), 16));
                 return true;
             }
         });
         Log.d(TAG, "onMapReady5 .......................");
 
 
+        googleMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
         googleMap.getUiSettings().setZoomControlsEnabled(true);
         googleMap.getUiSettings().setAllGesturesEnabled(true);
         PolylineOptions options = new PolylineOptions().width(5).color(Color.BLUE).geodesic(true);
         //LatLngBounds track = new LatLngBounds(gpsLoc.get(0), gpsLoc.get(numLoc - 1));
         //mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(track,0));
 
-        googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(MapsActivity.gpsLoc.get(0), 16.0f));
+        googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(MapsActivity.start_loc, 16.0f));
         for (int i = 0; i < MapsActivity.numLoc; i++) {
             LatLng point = MapsActivity.gpsLoc.get(i);
             options.add(point);
@@ -706,7 +739,10 @@ public class MapsActivity2 extends Activity implements
 
         line = googleMap.addPolyline(new PolylineOptions().width(3).color(Color.RED));
         Log.d(TAG, "onMapReady6 .......................");
-
+        dateStamp.add(0, new Date());
+        long t=0;
+        timeElap.add(t);
+        Log.d(TAG, "onMapReady6hula .......................");
 
     }
 }
