@@ -131,7 +131,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         Location myLocation = locationManager.getLastKnownLocation(provider);
 
         // set map type
-        mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+        //mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+        mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
 
         // Get latitude of the current location
         double latitude = myLocation.getLatitude();
@@ -200,7 +201,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     }*/
 
                 Log.d(TAG, "Loading Track");
-
 
                 if(com.example.ashutosh.mapping.List.trackId == 0){
                     nearest_track(start_loc);

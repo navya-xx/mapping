@@ -18,7 +18,6 @@ public class FullscreenActivity extends Activity {
     @Override
     public void onCreate(Bundle icicle) {
         super.onCreate(icicle);
-
         if (!splashLoaded) {
 
             setContentView(R.layout.activity_fullscreen);
